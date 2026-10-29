@@ -1,0 +1,4 @@
+# Versi diuji pada Python 3.14.6, Windows x64.
+grpcio==1.85.0
+grpcio-tools==1.85.0
+protobuf==7.36.2

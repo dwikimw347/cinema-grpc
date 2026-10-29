@@ -1,0 +1,73 @@
+syntax = "proto3";
+
+package cinema;
+
+service CinemaService {
+  rpc GetSchedules(GetSchedulesRequest) returns (GetSchedulesResponse);
+  rpc GetSeats(GetSeatsRequest) returns (GetSeatsResponse);
+  rpc BookSeat(BookSeatRequest) returns (BookSeatResponse);
+  rpc StreamSeatStatus(StreamSeatStatusRequest) returns (stream SeatStatusEvent);
+}
+
+enum SeatStatus {
+  SEAT_STATUS_UNSPECIFIED = 0;
+  AVAILABLE = 1;
+  BOOKED = 2;
+}
+
+enum BookingStatus {
+  BOOKING_STATUS_UNSPECIFIED = 0;
+  CONFIRMED = 1;
+  REJECTED = 2;
+}
+
+enum SeatEventType {
+  SEAT_EVENT_TYPE_UNSPECIFIED = 0;
+  SNAPSHOT = 1;
+  UPDATE = 2;
+}
+
+message Schedule {
+  string schedule_id = 1;
+  string movie_title = 2;
+  string studio = 3;
+  string show_time = 4; // ISO 8601, termasuk zona waktu.
+}
+
+message Seat {
+  string seat_id = 1;
+  string seat_number = 2;
+  string schedule_id = 3;
+  SeatStatus status = 4;
+}
+
+message GetSchedulesRequest {}
+message GetSchedulesResponse { repeated Schedule schedules = 1; }
+message GetSeatsRequest { string schedule_id = 1; }
+message GetSeatsResponse { repeated Seat seats = 1; }
+
+message BookSeatRequest {
+  string request_id = 1; // UUID; gunakan ID sama saat retry operasi yang sama.
+  string schedule_id = 2;
+  string seat_id = 3;
+  string customer_name = 4;
+}
+
+message BookSeatResponse {
+  string booking_id = 1;
+  string request_id = 2;
+  bool success = 3;
+  string message = 4;
+  string seat_id = 5;
+  BookingStatus booking_status = 6;
+}
+
+message StreamSeatStatusRequest { string schedule_id = 1; }
+
+// SNAPSHOT berisi seluruh kursi; UPDATE berisi satu kursi yang berubah.
+message SeatStatusEvent {
+  string schedule_id = 1;
+  SeatEventType event_type = 2;
+  repeated Seat seats = 3;
+  string timestamp = 4; // ISO 8601 UTC.
+}
