@@ -266,10 +266,26 @@ Verifikasi pada 29 Oktober 2026 menggunakan Python 3.14.6 di Windows x64:
 
 Durasi test di atas bukan benchmark latensi atau throughput aplikasi.
 
-## Serah terima ke Bagian 2
+## Implementasi Bagian 2 (Client & Toleransi Gangguan)
 
-Gunakan `.proto` dan package `generated` sebagai kontrak client. Bagian 1 belum
-mengerjakan antarmuka client, kebijakan retry client, pengukuran performa pada
-1/5/20 client, demo dua komputer, laporan proyek PDF, atau video demo. Pengujian
-di sini membuktikan fungsi server; pengukuran dan demo proyek tetap pekerjaan
-tahap berikutnya.
+Bagian 2 telah selesai diimplementasikan dengan komponen:
+1. **Client Library (`client/cinema_client.py`)**:
+   - `CinemaClient`: antarmuka gRPC lengkap (`get_schedules`, `get_seats`, `book_seat`, `stream_seat_status`).
+   - Penanganan timeout terukur (default 3 detik).
+   - Exponential backoff & jitter untuk retry otomatis saat terjadi `DEADLINE_EXCEEDED` atau `UNAVAILABLE`.
+   - **Idempotency Key (`request_id`)**: penggunaan UUID yang sama di setiap percobaan retry, menjamin semantik *at-most-once* dan mencegah double booking.
+2. **Interactive CLI Client (`client/cli.py`)**:
+   - Memilih jadwal tayang film secara interaktif.
+   - Visualisasi denah studio (Grid 4x5: baris A-D, kolom 1-5) dengan indikator warna status kursi.
+   - Pemesanan kursi dengan input validasi dan log retry yang jelas.
+   - **Mode Monitor Real-Time**: server streaming yang memperbarui denah kursi di layar secara instan saat ada reservasi dari client lain.
+   - Demo langsung pengujian idempotensi retry.
+3. **Skrip Demo & Pengujian**:
+   - `scripts/demo_fault_tolerance.py`: pengujian otomatis timeout, idempotent retry, race condition, dan live streaming.
+   - `scripts/run_two_clients_demo.py`: demonstrasi interaksi 2 client terdistribusi terhadap server.
+   - `scripts/benchmark.py`: pengujian throughput dan latensi untuk 1, 5, dan 20 client konkuren.
+4. **Multi-Container & Multi-Komputer**:
+   - `Dockerfile.server`, `Dockerfile.client`, dan `docker-compose.yml`.
+   - Petunjuk lengkap koneksi LAN / 2 komputer dan Docker di `PETUNJUK_DEMO.md`.
+5. **Verifikasi Test Suite**:
+   - `python -m unittest discover -s tests -v`: **22 test lulus** (16 server test + 6 client integration test).

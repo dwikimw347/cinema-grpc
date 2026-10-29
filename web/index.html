@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CINEPLEX — Sistem Reservasi Bioskop Terdistribusi</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#050507;--surface:#0c0d12;--surface2:#13141b;--surface3:#1a1b24;
+      --border:#242530;--border2:#2f3042;
+      --gold:#e8b341;--gold-dim:#a67c1a;--gold-glow:rgba(232,179,65,.22);
+      --green:#22c55e;--green-dim:#166534;--green-glow:rgba(34,197,94,.18);
+      --red:#ef4444;--red-dim:#7f1d1d;--red-glow:rgba(239,68,68,.15);
+      --blue:#3b82f6;--cyan:#06b6d4;
+      --txt:#f0f0f5;--txt2:#9ca3b4;--txt3:#5c6070;
+      --radius:14px;--radius-sm:10px;
+      --sans:'Inter',system-ui,-apple-system,sans-serif;
+      --mono:'JetBrains Mono',ui-monospace,monospace;
+    }
+    html{scroll-behavior:smooth}
+    body{font-family:var(--sans);background:var(--bg);color:var(--txt);min-height:100vh;overflow-x:hidden}
+    ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}
+    ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+
+    /* ═══ HERO BACKDROP ═══ */
+    .hero{position:relative;height:400px;overflow:hidden}
+    .hero-bg{position:absolute;inset:0;background-size:cover;background-position:center 30%;transition:background-image .6s ease}
+    .hero-overlay{position:absolute;inset:0;background:linear-gradient(180deg,rgba(5,5,7,.35) 0%,rgba(5,5,7,.8) 60%,var(--bg) 100%)}
+    .hero-content{position:relative;z-index:2;max-width:1320px;margin:0 auto;padding:0 2rem;height:100%;display:flex;flex-direction:column;justify-content:flex-end;padding-bottom:2.5rem}
+    .hero-tag{display:inline-flex;align-items:center;gap:.5rem;font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:.6rem}
+    .hero-tag::before{content:'';width:20px;height:2px;background:var(--gold);border-radius:1px}
+    .hero-title{font-size:2.5rem;font-weight:900;letter-spacing:-.03em;line-height:1.1;color:#fff;margin-bottom:.5rem;text-shadow:0 4px 24px rgba(0,0,0,.8)}
+    .hero-meta{font-size:.88rem;color:var(--txt2);display:flex;align-items:center;gap:1.25rem;flex-wrap:wrap}
+    .hero-meta-dot{width:4px;height:4px;border-radius:50%;background:var(--txt3)}
+
+    /* ═══ NAV BAR ═══ */
+    .topbar{position:fixed;top:0;left:0;right:0;z-index:90;padding:.75rem 2rem;display:flex;justify-content:space-between;align-items:center;background:rgba(5,5,7,.7);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid rgba(36,37,48,.5);transition:background .3s}
+    .topbar.scrolled{background:rgba(12,13,18,.96)}
+    .brand{display:flex;align-items:center;gap:.7rem}
+    .brand-logo{width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,var(--gold),#c78b15);display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:900;color:#000}
+    .brand-name{font-size:1.1rem;font-weight:800;letter-spacing:.04em;color:#fff}
+    .brand-sub{font-size:.62rem;font-weight:600;color:var(--gold);background:rgba(232,179,65,.12);padding:.15rem .45rem;border-radius:4px;border:1px solid rgba(232,179,65,.2);margin-left:.5rem;letter-spacing:.06em}
+    .live-badge{display:flex;align-items:center;gap:.45rem;padding:.35rem .8rem;border-radius:20px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.25);font-size:.75rem;font-weight:600;color:var(--green)}
+    .live-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:blink 2s infinite}
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+
+    /* ═══ MOVIE SELECTOR STRIP ═══ */
+    .movie-strip{max-width:1320px;margin:-3.5rem auto 0;padding:0 2rem;position:relative;z-index:5}
+    .strip-row{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem}
+    @media(max-width:780px){.strip-row{grid-template-columns:1fr}}
+    .movie-card{display:flex;gap:1rem;padding:1rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;transition:all .25s;position:relative;overflow:hidden}
+    .movie-card:hover{background:var(--surface2);border-color:var(--border2);transform:translateY(-2px)}
+    .movie-card.active{border:2px solid var(--gold);box-shadow:0 8px 32px var(--gold-glow)}
+    .movie-card.active::after{content:'DIPILIH';position:absolute;top:.6rem;right:.6rem;font-size:.58rem;font-weight:800;letter-spacing:.08em;background:var(--gold);color:#000;padding:.15rem .5rem;border-radius:4px}
+    .movie-poster{width:72px;height:102px;border-radius:8px;object-fit:cover;flex-shrink:0;box-shadow:0 4px 16px rgba(0,0,0,.6)}
+    .movie-info{display:flex;flex-direction:column;justify-content:center;gap:.25rem;min-width:0}
+    .movie-genre{font-size:.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gold)}
+    .movie-title-card{font-size:.95rem;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .movie-sub{font-size:.76rem;color:var(--txt2);display:flex;align-items:center;gap:.5rem}
+    .movie-rating{background:var(--surface3);padding:.1rem .35rem;border-radius:3px;font-weight:700;font-size:.65rem;color:var(--gold)}
+
+    /* ═══ MAIN LAYOUT ═══ */
+    .main-grid{max-width:1320px;margin:2rem auto 3rem;padding:0 2rem;display:grid;grid-template-columns:1fr 420px;gap:1.75rem}
+    @media(max-width:1060px){.main-grid{grid-template-columns:1fr}}
+
+    .panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.75rem;position:relative}
+    .panel-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem}
+    .panel-title{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--txt3)}
+    .panel-badge{font-size:.68rem;font-weight:600;color:var(--gold);font-family:var(--mono)}
+
+    /* ═══ SCREEN ═══ */
+    .screen-wrap{perspective:800px;margin-bottom:3rem;text-align:center;position:relative}
+    .screen-glow{position:absolute;top:10px;left:12%;right:12%;height:80px;background:radial-gradient(ellipse,rgba(232,179,65,.1),transparent 70%);pointer-events:none}
+    .screen-bar{height:56px;width:80%;margin:0 auto;border-top:3px solid rgba(255,255,255,.8);border-radius:50% 50% 0 0/16px 16px 0 0;background:linear-gradient(180deg,rgba(255,255,255,.25) 0%,rgba(255,255,255,.02) 70%,transparent 100%);transform:rotateX(-28deg);box-shadow:0 20px 50px rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:800;letter-spacing:.4em;color:rgba(255,255,255,.7);text-shadow:0 0 10px rgba(255,255,255,.5)}
+
+    /* ═══ SEATS ═══ */
+    .seats-area{display:flex;flex-direction:column;gap:1rem;align-items:center;margin-bottom:2rem}
+    .seat-row{display:flex;gap:.7rem;align-items:center}
+    .row-lbl{width:24px;font-size:.78rem;font-weight:700;color:var(--txt3);text-align:center}
+    .aisle{width:1.5rem}
+    .seat{
+      width:48px;height:44px;border-radius:8px 8px 4px 4px;display:flex;align-items:center;justify-content:center;
+      font-size:.78rem;font-weight:700;cursor:pointer;user-select:none;position:relative;
+      transition:all .2s cubic-bezier(.16,1,.3,1);
+    }
+    .seat::after{content:'';position:absolute;bottom:-3px;width:60%;height:3px;border-radius:2px;opacity:.25}
+    .seat.av{background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.4);color:#86efac}
+    .seat.av::after{background:var(--green)}
+    .seat.av:hover{background:rgba(34,197,94,.22);border-color:var(--green);transform:translateY(-3px) scale(1.06);box-shadow:0 6px 18px var(--green-glow)}
+    .seat.bk{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);color:#fca5a5;opacity:.5;cursor:not-allowed}
+    .seat.bk::after{background:var(--red);opacity:.15}
+    .seat.sel{background:linear-gradient(135deg,var(--gold),#b8860b);border:2px solid #fef3c7;color:#000;font-weight:800;transform:translateY(-4px) scale(1.14);box-shadow:0 8px 28px var(--gold-glow);z-index:5}
+    .seat.sel::after{background:#fff;opacity:.7}
+
+    .legend-bar{display:flex;justify-content:center;gap:2rem;padding-top:1.25rem;border-top:1px solid var(--border);font-size:.78rem;color:var(--txt2);flex-wrap:wrap}
+    .legend-i{display:flex;align-items:center;gap:.4rem}
+    .legend-chip{width:12px;height:12px;border-radius:3px}
+
+    /* ═══ SIDEBAR ═══ */
+    .sidebar{display:flex;flex-direction:column;gap:1.5rem}
+
+    /* ═══ TICKET STUB ═══ */
+    .ticket{background:linear-gradient(145deg,#12131a,#0e0f16);border:1px solid rgba(232,179,65,.25);border-radius:var(--radius);padding:1.5rem;position:relative;overflow:hidden}
+    .ticket::before,.ticket::after{content:'';position:absolute;top:52%;width:14px;height:14px;background:var(--surface);border-radius:50%;border:1px solid var(--border)}
+    .ticket::before{left:-7px}.ticket::after{right:-7px}
+    .ticket-top{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:.8rem;margin-bottom:.8rem;border-bottom:1px dashed rgba(232,179,65,.2)}
+    .ticket-movie-name{font-size:1.05rem;font-weight:800;color:#fff}
+    .ticket-studio{font-size:.72rem;color:var(--gold);font-weight:600;margin-top:2px}
+    .ticket-price-tag{text-align:right}
+    .ticket-price-label{font-size:.6rem;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em}
+    .ticket-price{font-size:1rem;font-weight:800;color:#fff}
+    .ticket-fields{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
+    .ticket-field small{display:block;font-size:.6rem;text-transform:uppercase;letter-spacing:.06em;color:var(--txt3);margin-bottom:1px}
+    .ticket-field span{font-size:.9rem;font-weight:700;color:#fff}
+    .ticket-seat-big{font-size:1.4rem !important;color:var(--gold) !important;font-family:var(--mono)}
+
+    /* ═══ FORM ═══ */
+    .fg{margin-bottom:1rem}
+    .fg label{display:block;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--txt2);margin-bottom:.35rem}
+    .fg-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:.35rem}
+    .fg-link{font-size:.68rem;color:var(--gold);cursor:pointer;font-weight:600}
+    .fg-link:hover{text-decoration:underline}
+    .inp{width:100%;padding:.7rem .9rem;background:#080910;border:1px solid var(--border);border-radius:var(--radius-sm);color:#fff;font-family:var(--sans);font-size:.88rem;outline:none;transition:border-color .2s,box-shadow .2s}
+    .inp:focus{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold-glow)}
+    .inp.mono{font-family:var(--mono);font-size:.74rem}
+
+    .btn{display:flex;align-items:center;justify-content:center;gap:.5rem;width:100%;padding:.8rem 1.2rem;border-radius:var(--radius-sm);font-size:.9rem;font-weight:700;cursor:pointer;border:none;transition:all .2s;font-family:var(--sans)}
+    .btn-gold{background:linear-gradient(135deg,var(--gold),#b8860b);color:#000;box-shadow:0 4px 16px var(--gold-glow)}
+    .btn-gold:hover:not(:disabled){filter:brightness(1.12);transform:translateY(-1px);box-shadow:0 6px 22px rgba(232,179,65,.35)}
+    .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--txt2);font-size:.8rem;padding:.6rem .8rem}
+    .btn-ghost:hover{background:var(--surface2);border-color:var(--border2);color:#fff}
+    .btn:disabled{opacity:.35;cursor:not-allowed;transform:none !important;box-shadow:none !important;filter:none !important}
+
+    .test-grid{display:grid;grid-template-columns:1fr 1fr;gap:.65rem;margin-top:.4rem}
+
+    /* ═══ CONSOLE ═══ */
+    .console-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem}
+    .console-tag{font-family:var(--mono);font-size:.66rem;color:var(--cyan);background:rgba(6,182,212,.1);padding:.12rem .45rem;border-radius:4px;border:1px solid rgba(6,182,212,.18)}
+    .console{background:#030408;border:1px solid var(--border);border-radius:var(--radius-sm);height:220px;padding:.75rem;font-family:var(--mono);font-size:.72rem;color:#cbd5e1;overflow-y:auto;white-space:pre-wrap;line-height:1.55}
+    .ll{margin-bottom:.3rem;display:flex;gap:.4rem}
+    .lt{color:var(--txt3);flex-shrink:0}
+    .li{color:#38bdf8}.lo{color:var(--green);font-weight:600}.lw{color:var(--gold)}.le{color:var(--red);font-weight:600}
+
+    /* ═══ TOAST ═══ */
+    .toasts{position:fixed;bottom:1.5rem;right:1.5rem;z-index:100;display:flex;flex-direction:column;gap:.6rem;pointer-events:none}
+    .toast{background:var(--surface2);border:1px solid var(--border);box-shadow:0 12px 40px rgba(0,0,0,.6);border-radius:var(--radius-sm);padding:.9rem 1.1rem;display:flex;align-items:center;gap:.75rem;color:#fff;font-size:.84rem;max-width:360px;pointer-events:auto;animation:slideUp .35s cubic-bezier(.16,1,.3,1)}
+    @keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+    .toast-ok{border-left:3px solid var(--green)}.toast-err{border-left:3px solid var(--red)}.toast-warn{border-left:3px solid var(--gold)}
+  </style>
+</head>
+<body>
+
+<!-- ═══ FIXED TOP BAR ═══ -->
+<nav class="topbar" id="topbar">
+  <div class="brand">
+    <div class="brand-logo">C</div>
+    <span class="brand-name">CINEPLEX</span>
+    <span class="brand-sub">gRPC DISTRIBUTED</span>
+  </div>
+  <div class="live-badge" id="streamBadge">
+    <div class="live-dot"></div>
+    <span id="streamLabel">SSE STREAM AKTIF</span>
+  </div>
+</nav>
+
+<!-- ═══ HERO BACKDROP ═══ -->
+<section class="hero" id="heroSection">
+  <div class="hero-bg" id="heroBg" style="background-image:url('/static/images/backdrop_nusantara.jpg')"></div>
+  <div class="hero-overlay"></div>
+  <div class="hero-content">
+    <div class="hero-tag" id="heroTag">Petualangan • Action</div>
+    <h1 class="hero-title" id="heroTitle">Petualangan Nusantara</h1>
+    <div class="hero-meta" id="heroMeta">
+      <span>Studio 1</span>
+      <div class="hero-meta-dot"></div>
+      <span>13:00 WIB</span>
+      <div class="hero-meta-dot"></div>
+      <span>128 Menit</span>
+      <div class="hero-meta-dot"></div>
+      <span>SU (Semua Umur)</span>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ MOVIE SELECTOR STRIP ═══ -->
+<div class="movie-strip">
+  <div class="strip-row" id="movieStrip"></div>
+</div>
+
+<!-- ═══ MAIN CONTENT ═══ -->
+<div class="main-grid">
+  <!-- LEFT: AUDITORIUM -->
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title">Denah Kursi Studio</span>
+      <span class="panel-badge" id="studioLabel">STUDIO 1 — DOLBY ATMOS</span>
+    </div>
+
+    <div class="screen-wrap">
+      <div class="screen-glow"></div>
+      <div class="screen-bar">S C R E E N</div>
+    </div>
+
+    <div class="seats-area" id="seatsArea"></div>
+
+    <div class="legend-bar">
+      <div class="legend-i"><div class="legend-chip" style="background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.5)"></div>Tersedia (<strong id="cntA" style="color:var(--green)">0</strong>)</div>
+      <div class="legend-i"><div class="legend-chip" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25)"></div>Terisi (<strong id="cntB" style="color:var(--red)">0</strong>)</div>
+      <div class="legend-i"><div class="legend-chip" style="background:var(--gold);border:1px solid #fff"></div>Pilihan Anda</div>
+    </div>
+  </div>
+
+  <!-- RIGHT: SIDEBAR -->
+  <div class="sidebar">
+    <!-- TICKET CARD -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Tiket Reservasi</span>
+        <span class="panel-badge">IDEMPOTENT GATEWAY</span>
+      </div>
+
+      <div class="ticket">
+        <div class="ticket-top">
+          <div>
+            <div class="ticket-movie-name" id="tkMovie">Pilih Film...</div>
+            <div class="ticket-studio" id="tkStudio">—</div>
+          </div>
+          <div class="ticket-price-tag">
+            <div class="ticket-price-label">Harga</div>
+            <div class="ticket-price">Rp 50.000</div>
+          </div>
+        </div>
+        <div class="ticket-fields">
+          <div class="ticket-field"><small>Kursi</small><span class="ticket-seat-big" id="tkSeat">—</span></div>
+          <div class="ticket-field"><small>Waktu</small><span id="tkTime">—</span></div>
+        </div>
+      </div>
+
+      <div style="margin-top:1.25rem">
+        <div class="fg">
+          <label>Nama Pemesan</label>
+          <input class="inp" id="inpName" value="Ripki Maulana" placeholder="Masukkan nama...">
+        </div>
+        <div class="fg">
+          <div class="fg-row">
+            <label style="margin:0">Request ID (UUID Idempotency Key)</label>
+            <span class="fg-link" onclick="newUUID()">[Generate Baru]</span>
+          </div>
+          <input class="inp mono" id="inpUUID" readonly>
+          <small style="color:var(--txt3);font-size:.66rem;display:block;margin-top:.25rem">UUID yang sama pada retry menjamin semantik <strong style="color:var(--txt2)">At-Most-Once</strong></small>
+        </div>
+        <button class="btn btn-gold" id="btnBook" onclick="doBook()" disabled>Konfirmasi Pemesanan</button>
+      </div>
+    </div>
+
+    <!-- TESTBENCH -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Uji Toleransi & Kinerja</span>
+        <span class="panel-badge" style="color:var(--cyan)">RUBRIK KPT</span>
+      </div>
+      <div class="test-grid">
+        <button class="btn btn-ghost" onclick="testIdemp()">⚡ Retry Idempoten</button>
+        <button class="btn btn-ghost" onclick="testRace()">⚔️ Concurrency (5)</button>
+      </div>
+      <button class="btn btn-ghost" style="margin-top:.65rem" onclick="testBench()">📊 Benchmark 1 / 5 / 20 Client</button>
+
+      <div style="margin-top:1.15rem">
+        <div class="console-head">
+          <span class="console-tag">LIVE RPC LOG</span>
+          <span style="font-size:.66rem;color:var(--txt3);cursor:pointer" onclick="clrLog()">[Clear]</span>
+        </div>
+        <div class="console" id="con"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toasts" id="toastBox"></div>
+
+<script>
+// ═══ STATE ═══
+let SCH=[], curSch="SCH001", seats={}, selSeat=null, sse=null;
+
+const PRESETS={
+  SCH001:{tag:"Petualangan • Action",rating:"SU",dur:"128 Menit",poster:"/static/images/poster_nusantara.jpg",bg:"/static/images/backdrop_nusantara.jpg"},
+  SCH002:{tag:"Misteri • Thriller",rating:"17+",dur:"115 Menit",poster:"/static/images/poster_misteri.jpg",bg:"/static/images/backdrop_misteri.jpg"},
+  SCH003:{tag:"Drama • Romance",rating:"13+",dur:"105 Menit",poster:"/static/images/poster_senja.jpg",bg:"/static/images/backdrop_senja.jpg"},
+};
+
+// ═══ HELPERS ═══
+function log(m,t="i"){
+  const b=document.getElementById("con"),d=new Date();
+  const ts=`${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}:${String(d.getSeconds()).padStart(2,"0")}.${String(d.getMilliseconds()).padStart(3,"0")}`;
+  const cls={i:"li",o:"lo",w:"lw",e:"le"}[t]||"li";
+  const el=document.createElement("div");el.className="ll";
+  el.innerHTML=`<span class="lt">[${ts}]</span><span class="${cls}">${m}</span>`;
+  b.appendChild(el);b.scrollTop=b.scrollHeight;
+}
+function clrLog(){document.getElementById("con").innerHTML=""}
+function toast(title,desc,type="ok"){
+  const a=document.getElementById("toastBox"),t=document.createElement("div");
+  t.className=`toast toast-${type}`;
+  t.innerHTML=`<div><div style="font-weight:700;margin-bottom:1px">${title}</div><div style="font-size:.74rem;color:var(--txt2)">${desc}</div></div>`;
+  a.appendChild(t);setTimeout(()=>{t.style.opacity="0";t.style.transform="translateY(8px)";t.style.transition="all .3s";setTimeout(()=>t.remove(),300)},4200);
+}
+function uuid(){return"xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g,c=>{const r=Math.random()*16|0;return(c==="x"?r:(r&0x3|0x8)).toString(16)})}
+function newUUID(){const u=uuid();document.getElementById("inpUUID").value=u;log("UUID baru: "+u)}
+
+// ═══ TOPBAR SCROLL ═══
+window.addEventListener("scroll",()=>document.getElementById("topbar").classList.toggle("scrolled",window.scrollY>60));
+
+// ═══ INIT ═══
+async function init(){
+  newUUID();
+  try{
+    log("RPC GetSchedules()...","i");
+    const r=await fetch("/api/schedules"),j=await r.json();
+    if(j.success&&j.schedules.length){
+      SCH=j.schedules;
+      renderStrip();
+      pickMovie(SCH[0].schedule_id);
+      log(`${SCH.length} jadwal berhasil dimuat`,"o");
+    }
+  }catch(e){log("Gagal memuat: "+e.message,"e");toast("Error","Gagal koneksi ke gRPC Gateway","err")}
+}
+
+function renderStrip(){
+  const c=document.getElementById("movieStrip");c.innerHTML="";
+  SCH.forEach(s=>{
+    const p=PRESETS[s.schedule_id]||{tag:"Film",rating:"SU",dur:"120m",poster:"",bg:""};
+    const t=s.show_time.includes("T")?s.show_time.split("T")[1].substring(0,5):"13:00";
+    const d=document.createElement("div");d.className=`movie-card${s.schedule_id===curSch?" active":""}`;
+    d.id="mc-"+s.schedule_id;d.onclick=()=>pickMovie(s.schedule_id);
+    d.innerHTML=`
+      <img class="movie-poster" src="${p.poster}" alt="${s.movie_title}" onerror="this.style.background='var(--surface3)'">
+      <div class="movie-info">
+        <div class="movie-genre">${p.tag}</div>
+        <div class="movie-title-card">${s.movie_title}</div>
+        <div class="movie-sub"><span>${t} WIB</span><span class="movie-rating">${p.rating}</span><span>${s.studio}</span></div>
+      </div>`;
+    c.appendChild(d);
+  });
+}
+
+function pickMovie(id){
+  curSch=id;selSeat=null;
+  document.getElementById("tkSeat").textContent="—";
+  document.getElementById("btnBook").disabled=true;
+
+  // Cards
+  document.querySelectorAll(".movie-card").forEach(c=>c.classList.remove("active"));
+  const ac=document.getElementById("mc-"+id);if(ac)ac.classList.add("active");
+
+  // Hero
+  const s=SCH.find(x=>x.schedule_id===id), p=PRESETS[id]||{};
+  if(s){
+    document.getElementById("heroBg").style.backgroundImage=`url('${p.bg||""}')`;
+    document.getElementById("heroTag").textContent=p.tag||"";
+    document.getElementById("heroTitle").textContent=s.movie_title;
+    const t=s.show_time.includes("T")?s.show_time.split("T")[1].substring(0,5):"13:00";
+    document.getElementById("heroMeta").innerHTML=`
+      <span>${s.studio}</span><div class="hero-meta-dot"></div>
+      <span>${t} WIB</span><div class="hero-meta-dot"></div>
+      <span>${p.dur||""}</span><div class="hero-meta-dot"></div>
+      <span>${p.rating||""}</span>`;
+    document.getElementById("tkMovie").textContent=s.movie_title;
+    document.getElementById("tkStudio").textContent=s.studio+" — Dolby Atmos";
+    document.getElementById("tkTime").textContent=t+" WIB";
+    document.getElementById("studioLabel").textContent=s.studio.toUpperCase()+" — DOLBY ATMOS";
+  }
+  startSSE(id);
+}
+
+function startSSE(id){
+  if(sse)sse.close();
+  log(`StreamSeatStatus(${id})...`,"i");
+  sse=new EventSource("/api/stream?schedule_id="+id);
+  sse.onopen=()=>{document.getElementById("streamLabel").textContent="SSE STREAM AKTIF"};
+  sse.onmessage=e=>{
+    try{
+      const d=JSON.parse(e.data);
+      if(d.event_type==="SNAPSHOT"){seats={};d.seats.forEach(s=>seats[s.seat_number]=s);log(`SNAPSHOT: ${d.seats.length} kursi`,"o");renderSeats()}
+      else if(d.event_type==="UPDATE"){d.seats.forEach(s=>{seats[s.seat_number]=s;log(`UPDATE ${s.seat_number} → ${s.status}`,"w");
+        if(selSeat===s.seat_number&&s.status==="BOOKED"){selSeat=null;document.getElementById("tkSeat").textContent="—";document.getElementById("btnBook").disabled=true;toast("Kursi Terambil",`${s.seat_number} dipesan pengguna lain`,"warn")}
+      });renderSeats()}
+    }catch(er){}
+  };
+  sse.onerror=()=>{document.getElementById("streamLabel").textContent="RECONNECTING..."};
+}
+
+function renderSeats(){
+  const c=document.getElementById("seatsArea");c.innerHTML="";
+  const rows=["A","B","C","D"];let a=0,b=0;
+  rows.forEach(r=>{
+    const row=document.createElement("div");row.className="seat-row";
+    const lbl=document.createElement("div");lbl.className="row-lbl";lbl.textContent=r;row.appendChild(lbl);
+    for(let i=1;i<=5;i++){
+      if(i===4){const g=document.createElement("div");g.className="aisle";row.appendChild(g)}
+      const sn=r+i,sd=seats[sn]||{status:"AVAILABLE"},bk=sd.status==="BOOKED";
+      bk?b++:a++;
+      const el=document.createElement("div");
+      el.className=`seat ${bk?"bk":"av"}`;
+      if(selSeat===sn&&!bk)el.classList.add("sel");
+      el.textContent=sn;
+      if(!bk)el.onclick=()=>{selSeat=sn;document.getElementById("tkSeat").textContent=sn;document.getElementById("btnBook").disabled=false;renderSeats();log(`Kursi ${sn} dipilih`)};
+      row.appendChild(el);
+    }
+    c.appendChild(row);
+  });
+  document.getElementById("cntA").textContent=a;
+  document.getElementById("cntB").textContent=b;
+}
+
+// ═══ BOOKING ═══
+async function doBook(){
+  if(!selSeat)return;
+  const btn=document.getElementById("btnBook");btn.disabled=true;btn.textContent="Mengirim RPC...";
+  const sid=curSch+"-"+selSeat, nm=document.getElementById("inpName").value.trim()||"User", rid=document.getElementById("inpUUID").value;
+  log(`BookSeat: ${sid}, ${nm}, UUID=${rid}`);
+  try{
+    const r=await fetch("/api/book",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({schedule_id:curSch,seat_id:sid,customer_name:nm,request_id:rid,timeout:3,max_retries:3})});
+    const d=await r.json();
+    if(d.success){log(`[OK] Tiket #${d.booking_id} (${d.duration_ms}ms)`,"o");toast("Berhasil!",`Kursi ${selSeat} atas nama ${nm}`);selSeat=null;document.getElementById("tkSeat").textContent="—";newUUID()}
+    else{log(`[DITOLAK] ${d.message||d.error}`,"e");toast("Ditolak",d.message||"Kursi terisi","err")}
+  }catch(e){log("Network error: "+e.message,"e");toast("Error",e.message,"err")}
+  finally{btn.disabled=!selSeat;btn.textContent="Konfirmasi Pemesanan"}
+}
+
+// ═══ TEST: IDEMPOTEN ═══
+async function testIdemp(){
+  const id=uuid(),sid=curSch+"-D5";
+  log("══════ UJI RETRY IDEMPOTEN ══════","w");
+  log(`Permintaan #1 UUID=${id}`);
+  const p={schedule_id:curSch,seat_id:sid,customer_name:"Tester Idemp",request_id:id};
+  try{
+    const r1=await(await fetch("/api/book",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(p)})).json();
+    log(`#1 → ${r1.booking_status} | ID: ${r1.booking_id}`);
+    log("Permintaan #2 (RETRY ID SAMA)...","w");
+    const r2=await(await fetch("/api/book",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(p)})).json();
+    const ok=r1.booking_id===r2.booking_id;
+    log(ok?`[PASS] Deduplikasi aktif! Booking ID identik (${r2.booking_id})`:"[FAIL] Respons tidak cocok",ok?"o":"e");
+    if(ok)toast("Idempoten Berhasil","Server deduplikasi request_id sama");
+  }catch(e){log("Error: "+e.message,"e")}
+}
+
+// ═══ TEST: CONCURRENCY ═══
+async function testRace(){
+  const sid=curSch+"-B1";
+  log("══════ UJI KONKURENSI 5 CLIENT ══════","w");
+  log(`Target: ${sid}`);
+  try{
+    const r=await(await fetch("/api/concurrency_test",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({schedule_id:curSch,seat_id:sid})})).json();
+    if(r.success){
+      r.results.forEach(x=>log(`→ ${x.client} | ${x.status} (${x.latency_ms}ms) | ${x.message}`,x.status==="CONFIRMED"?"o":"e"));
+      log(`Hasil: ${r.confirmed_count} CONFIRMED, ${r.rejected_count} REJECTED`,"w");
+      if(r.confirmed_count===1)toast("Konkurensi Aman","1 menang, 4 ditolak — no race condition");
+    }
+  }catch(e){log("Error: "+e.message,"e")}
+}
+
+// ═══ TEST: BENCHMARK ═══
+async function testBench(){
+  log("══════ BENCHMARK gRPC ══════","w");
+  log("Mengukur latensi & throughput...");
+  try{
+    const r=await(await fetch("/api/benchmark",{method:"POST"})).json();
+    if(r.success){log("=== HASIL ===","o");r.results.forEach(x=>log(`[${x.concurrency} client] ${x.throughput} req/s | ${x.avg_latency}ms (${x.total_time}s)`,"o"));toast("Benchmark Selesai","Data berhasil diukur")}
+  }catch(e){log("Error: "+e.message,"e")}
+}
+
+window.onload=init;
+</script>
+</body>
+</html>

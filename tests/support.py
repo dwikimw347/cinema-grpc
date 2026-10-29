@@ -22,6 +22,7 @@ class RpcTestCase(unittest.TestCase):
 
     def start_server(self):
         self.server, self.manager, port = create_server(self.db_path, "127.0.0.1:0")
+        self.port = port
         self.server.start()
         self.channel = grpc.insecure_channel(f"127.0.0.1:{port}")
         try:
