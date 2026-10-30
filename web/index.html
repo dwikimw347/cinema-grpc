@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#F3F2F6">
+  <title>Cineplex | Reservasi tiket bioskop</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/app.css?v=20261030-2">
+  <script src="/static/js/app.js?v=20261030-2" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#reservation">Langsung ke reservasi</a>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="wordmark" href="#reservation" aria-label="Cineplex, reservasi">CINEPLEX<span class="wordmark-period" aria-hidden="true">.</span></a>
+      <nav aria-label="Navigasi utama">
+        <a class="nav-link active" href="#reservation">Reservasi</a>
+        <a class="nav-link" href="#systemTools" onclick="openTools()">Uji sistem</a>
+      </nav>
+      <div class="connection" id="connection" data-state="connecting" role="status">
+        <span class="connection-dot" aria-hidden="true"></span><span id="streamLabel">Menghubungkan</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="page" id="reservation">
+    <div class="page-intro">
+      <h1>Temukan kursi terbaikmu.</h1>
+      <p class="intro-help">Status kursi diperbarui langsung<br>selama kamu memilih.</p>
+    </div>
+
+    <div class="booking-layout">
+      <section class="programme" aria-labelledby="programmeTitle">
+        <div class="section-heading"><h2 id="programmeTitle">Jadwal film</h2><span id="scheduleCount" class="quiet-count">Memuat</span></div>
+        <p class="section-note" id="programmeDate">Menunggu jadwal</p>
+        <div class="programme-list" id="movieStrip" aria-busy="true"><p class="empty-state">Memuat jadwal film...</p></div>
+        <div class="programme-footnote"><span class="small-rule" aria-hidden="true"></span><p>Film ilustrasi untuk demo reservasi.<br>Jadwal dan kursi terhubung ke server.</p></div>
+      </section>
+
+      <section class="auditorium" aria-labelledby="selectedTitle">
+        <div class="auditorium-heading"><span class="auditorium-label">Pilih kursi</span><span class="studio-label" id="studioLabel">Menunggu jadwal</span></div>
+        <h2 id="selectedTitle">Menyiapkan studionya...</h2>
+        <p id="selectedMeta" class="selected-meta">Jadwal akan tampil setelah server terhubung.</p>
+        <div class="screen" aria-label="Layar bioskop"><div class="screen-line"></div><span>Layar bioskop</span></div>
+        <div id="seatNotice" class="seat-notice" role="status">Memuat status kursi...</div>
+        <div class="seats-area" id="seatsArea" aria-label="Denah kursi" aria-busy="true"></div>
+        <p class="seat-instruction" id="seatInstruction">Pilih satu kursi yang tersedia.</p>
+        <div class="seat-legend" aria-label="Keterangan status kursi">
+          <span><i class="legend-seat available" aria-hidden="true"></i>Tersedia <b id="cntA">-</b></span>
+          <span><i class="legend-seat chosen" aria-hidden="true">✓</i>Pilihanmu</span>
+          <span><i class="legend-seat taken" aria-hidden="true">×</i>Terisi <b id="cntB">-</b></span>
+        </div>
+        <div class="auditorium-footer"><span class="live-line" aria-hidden="true"></span><span>Status kursi diperbarui langsung.</span></div>
+      </section>
+
+      <aside class="reservation" aria-labelledby="reservationTitle">
+        <div class="section-heading"><h2 id="reservationTitle">Reservasimu</h2><span class="ticket-mark">1 tiket</span></div>
+        <section class="ticket" aria-label="Ringkasan pilihan">
+          <p class="ticket-label">Film pilihan</p><h3 id="tkMovie">Belum ada film</h3>
+          <div class="ticket-session"><span id="tkStudio">-</span><span id="tkTime">-</span></div>
+          <p class="ticket-date" id="tkDate">Pilih jadwal di sebelah kiri.</p>
+          <div class="ticket-perforation" aria-hidden="true"></div>
+          <div class="ticket-seat-row"><div><span class="ticket-label">Nomor kursi</span><strong id="tkSeat">-</strong></div><span class="ticket-seat-hint" id="ticketHint">Belum<br>dipilih</span></div>
+          <div class="ticket-total"><span>Harga simulasi</span><strong>Rp 50.000</strong></div>
+        </section>
+        <form id="bookingForm" onsubmit="event.preventDefault();doBook()">
+          <label for="inpName">Nama pemesan</label>
+          <input class="input" id="inpName" name="customer_name" maxlength="200" placeholder="Nama untuk reservasi" autocomplete="name">
+          <p class="field-help">Nama ini akan tercatat pada pemesananmu.</p>
+          <button class="primary-button" id="btnBook" type="submit" disabled>Pesan kursi</button>
+          <p class="booking-help" id="bookingHelp">Pilih kursi untuk melanjutkan.</p>
+        </form>
+        <div class="booking-result" id="bookingResult" role="status" hidden></div>
+        <details class="request-details" id="requestDetails">
+          <summary>Detail permintaan</summary>
+          <label for="inpUUID">ID permintaan</label><input class="input request-id" id="inpUUID" readonly>
+          <button class="text-button" type="button" onclick="newUUID()">Buat ID baru</button>
+          <p>Jika koneksi terganggu, ID yang sama digunakan untuk memeriksa hasil tanpa membuat pemesanan baru.</p>
+        </details>
+        <p class="simulation-note">Demo reservasi. Tidak ada pembayaran.</p>
+      </aside>
+    </div>
+
+    <details class="system-tools" id="systemTools">
+      <summary><span><strong>Di balik reservasi</strong><span>Uji sistem dan lihat aktivitas server</span></span><span class="disclosure-label">Buka alat uji <span aria-hidden="true">+</span></span></summary>
+      <div class="tools-content">
+        <div class="tool-actions"><div><h2>Uji sistem</h2><p>Pengujian pemesanan memakai kursi tersedia pada jadwal aktif.</p></div><div class="tool-buttons">
+          <button class="secondary-button" id="btnIdemp" onclick="testIdemp()">Uji deduplikasi</button>
+          <button class="secondary-button" id="btnRace" onclick="testRace()">Uji 5 pemesan</button>
+          <button class="secondary-button" id="btnBench" onclick="testBench()">Ukur kinerja</button>
+        </div></div>
+        <div id="toolResult" class="tool-result" role="status" hidden></div>
+        <div class="log-heading"><h3>Aktivitas RPC</h3><button class="text-button" onclick="clrLog()">Bersihkan log</button></div>
+        <div class="rpc-log" id="con" tabindex="0" aria-label="Log aktivitas server"></div>
+      </div>
+    </details>
+    <footer class="page-footer"><span>Cineplex</span><span>Reservasi tiket bioskop berbasis gRPC</span><a href="#reservation">Kembali ke reservasi</a></footer>
+  </main>
+  <div class="toasts" id="toastBox" aria-live="polite" aria-atomic="false"></div>
+</body>
+</html>

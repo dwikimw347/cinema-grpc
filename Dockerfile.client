@@ -1,0 +1,18 @@
+FROM python:3.14-slim
+
+WORKDIR /app
+
+# Salin dependensi dan instal
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Salin kode aplikasi
+COPY proto/ proto/
+COPY generated/ generated/
+COPY client/ client/
+COPY scripts/ scripts/
+
+ENV PYTHONUNBUFFERED=1
+
+# Default menjalankan client interaktif atau demo
+CMD ["python", "-m", "client.cli", "--server", "cinema-server:50051"]

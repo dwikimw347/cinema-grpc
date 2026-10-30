@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  cinema-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.server
+    container_name: cinema-server
+    ports:
+      - "50051:50051"
+    volumes:
+      - cinema-data:/app/data
+    networks:
+      - cinema-net
+    restart: unless-stopped
+
+  cinema-client1:
+    build:
+      context: .
+      dockerfile: Dockerfile.client
+    container_name: cinema-client1
+    stdin_open: true
+    tty: true
+    depends_on:
+      - cinema-server
+    networks:
+      - cinema-net
+    command: ["python", "-m", "client.cli", "--server", "cinema-server:50051"]
+
+  cinema-client2:
+    build:
+      context: .
+      dockerfile: Dockerfile.client
+    container_name: cinema-client2
+    stdin_open: true
+    tty: true
+    depends_on:
+      - cinema-server
+    networks:
+      - cinema-net
+    command: ["python", "-m", "client.cli", "--server", "cinema-server:50051"]
+
+networks:
+  cinema-net:
+    driver: bridge
+
+volumes:
+  cinema-data:

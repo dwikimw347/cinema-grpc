@@ -22,7 +22,12 @@ def create_server(db_path=DEFAULT_DATABASE, address="localhost:50051", max_worke
     database = Database(db_path)
     database.initialize()
     manager = SeatManager(database, queue_size, max_subscribers)
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=max_workers))
+    options = [
+        ("grpc.http2.min_ping_interval_without_data_ms", 1000),
+        ("grpc.http2.max_ping_strikes", 0),
+        ("grpc.keepalive_permit_without_calls", 1),
+    ]
+    server = grpc.server(futures.ThreadPoolExecutor(max_workers=max_workers), options=options)
     pb_grpc.add_CinemaServiceServicer_to_server(CinemaService(manager), server)
     port = server.add_insecure_port(address)
     if port == 0:

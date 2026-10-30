@@ -266,10 +266,117 @@ Verifikasi pada 29 Oktober 2026 menggunakan Python 3.14.6 di Windows x64:
 
 Durasi test di atas bukan benchmark latensi atau throughput aplikasi.
 
-## Serah terima ke Bagian 2
+## Implementasi Bagian 2 (Client & Toleransi Gangguan)
 
-Gunakan `.proto` dan package `generated` sebagai kontrak client. Bagian 1 belum
-mengerjakan antarmuka client, kebijakan retry client, pengukuran performa pada
-1/5/20 client, demo dua komputer, laporan proyek PDF, atau video demo. Pengujian
-di sini membuktikan fungsi server; pengukuran dan demo proyek tetap pekerjaan
-tahap berikutnya.
+Bagian 2 telah selesai diimplementasikan dengan komponen:
+1. **Client Library (`client/cinema_client.py`)**:
+   - `CinemaClient`: antarmuka gRPC lengkap (`get_schedules`, `get_seats`, `book_seat`, `stream_seat_status`).
+   - Penanganan timeout terukur (default 3 detik).
+   - Exponential backoff & jitter untuk retry otomatis saat terjadi `DEADLINE_EXCEEDED` atau `UNAVAILABLE`.
+   - **Idempotency Key (`request_id`)**: penggunaan UUID yang sama di setiap percobaan retry, menjamin semantik *at-most-once* dan mencegah double booking.
+2. **Interactive CLI Client (`client/cli.py`)**:
+   - Memilih jadwal tayang film secara interaktif.
+   - Visualisasi denah studio (Grid 4x5: baris A-D, kolom 1-5) dengan indikator warna status kursi.
+   - Pemesanan kursi dengan input validasi dan log retry yang jelas.
+   - **Mode Monitor Real-Time**: server streaming yang memperbarui denah kursi di layar secara instan saat ada reservasi dari client lain.
+   - Demo langsung pengujian idempotensi retry.
+3. **Skrip Demo & Pengujian**:
+   - `scripts/demo_fault_tolerance.py`: pengujian otomatis timeout, idempotent retry, race condition, dan live streaming.
+   - `scripts/run_two_clients_demo.py`: demonstrasi interaksi 2 client terdistribusi terhadap server.
+   - `scripts/benchmark.py`: pengujian throughput dan latensi untuk 1, 5, dan 20 client konkuren.
+4. **Multi-Container & Multi-Komputer**:
+   - `Dockerfile.server`, `Dockerfile.client`, dan `docker-compose.yml`.
+   - Petunjuk lengkap koneksi LAN / 2 komputer dan Docker di `PETUNJUK_DEMO.md`.
+5. **Verifikasi Test Suite**:
+   - Perintah pengujian terbaru dan hasil perbaikan tercantum di bagian berikut.
+
+## Perbaikan review Bagian 2 (30 Oktober 2026)
+
+Perbaikan meliputi pembatasan path file static, cleanup stream SSE setelah
+disconnect/shutdown tanpa menunggu booking baru, UUID baru setelah respons
+REJECTED, serta payload/UUID tetap ketika hasil booking belum diketahui.
+Kontrol film dan kursi menggunakan button native agar bisa dipilih dengan
+keyboard. Dockerfile server dan client sudah menggunakan Python 3.14.
+
+Jalankan gateway web setelah server gRPC aktif, dari terminal PowerShell kedua:
+
+```powershell
+.\.venv\Scripts\python.exe web\server.py 8080
+```
+
+Buka `http://localhost:8080`. Untuk backend di komputer berbeda:
+
+```powershell
+$env:GRPC_SERVER = '192.168.1.50:50051'
+.\.venv\Scripts\python.exe web\server.py 8080
+```
+
+Jika browser menunjukkan hasil belum diketahui, gunakan tombol **Periksa /
+Ulangi Pemesanan**. UUID dan payload lama dipertahankan sampai hasil final
+diterima; mengganti kursi, nama, jadwal, atau UUID sementara dibatasi.
+
+Demo timeout nyata berjalan pada server lokal dengan database sementara sendiri:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\demo_fault_tolerance.py --local
+```
+
+Balasan pertama ditunda 0,6 detik setelah commit sementara client memakai
+timeout 0,15 detik. Client harus mengalami DEADLINE_EXCEEDED lalu memperoleh
+hasil melalui retry dengan UUID sama. Server utama tidak memakai penundaan ini.
+Mode ini tidak mengubah database utama dan dapat dijalankan berulang.
+
+Untuk demo terhadap server yang sudah berjalan:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\demo_fault_tolerance.py localhost:50051
+.\.venv\Scripts\python.exe scripts\run_two_clients_demo.py localhost:50051
+```
+
+Mode server eksternal menguji deduplikasi, perebutan kursi, dan streaming.
+Mode ini tidak mengklaim memicu timeout nyata. Demo memilih tiga kursi tersedia;
+jika tidak cukup kursi atau syarat pengujian gagal, proses keluar dengan kode 1.
+Kedua client pada skrip lokal tidak menggantikan demo dua komputer/container.
+
+Pengujian regresi:
+
+```powershell
+.\.venv\Scripts\python.exe -m unittest discover -s tests -v
+node tests\test_web_state.js
+```
+
+Python memverifikasi 33 test (server, client, gateway, serta demo dengan timeout
+nyata). Node.js hanya diperlukan untuk test state browser: UUID setelah
+penolakan, payload tetap setelah gangguan, dan pencegahan klik ganda; server dan
+web tidak memerlukan Node.js untuk berjalan. Semua test memakai DB sementara.
+
+Docker belum diuji build/run di lingkungan pengerjaan karena Docker belum
+tersedia. Demo dua komputer tetap perlu dilaksanakan dan direkam oleh kelompok.
+
+## Frontend Cineplex Foyer
+
+Desain frontend mengacu pada `DESIGN.md`. Implementasinya tetap HTML, CSS, dan
+JavaScript biasa, tanpa framework atau dependency frontend baru:
+
+- `web/index.html`: struktur halaman dan elemen semantik.
+- `web/static/css/app.css`: token, komponen, dan layout responsif.
+- `web/static/js/app.js`: integrasi API, streaming, state booking, dan alat uji.
+
+Halaman utama menampilkan pilihan jadwal, denah kursi, dan ringkasan reservasi.
+Detail UUID berada di disclosure **Detail permintaan**. Deduplikasi, konkurensi,
+benchmark, serta log tetap tersedia melalui **Uji sistem / Di balik reservasi**.
+Judul film, tanggal, waktu, studio, dan kursi berasal dari API. Gambar yang sudah
+ada digunakan sebagai ilustrasi film demo. Harga tetap merupakan simulasi.
+
+Cara menjalankan tidak berubah: mulai `python -m server.main`, kemudian
+`python web/server.py 8080`, menggunakan Python virtual environment sebagaimana
+contoh di atas. Buka `http://localhost:8080`; jika tampilan lama masih terlihat,
+tekan **Ctrl+F5**. Saat mengubah aset lagi, naikkan penanda versi CSS/JS di HTML
+karena gateway memberi cache satu jam untuk file static.
+
+Verifikasi desain 30 Oktober 2026: 33 test Python lulus, tes JavaScript lulus
+(termasuk error koneksi dan jadwal kosong), serta `npx @google/design.md lint
+DESIGN.md` berhasil. Tampilan dirender dan diperiksa pada viewport 320, 375, 900,
+dan 1440 piksel tanpa overflow horizontal. Booking, streaming, navigasi keyboard,
+detail UUID, alat uji, benchmark, dan pembersihan log dicoba di browser dengan
+database sementara. Tidak ada perubahan kontrak API atau database untuk desain ini.
