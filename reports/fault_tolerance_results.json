@@ -1,0 +1,120 @@
+{
+  "environment": "Local loopback gRPC; isolated temporary SQLite databases; Python runtime and gRPC installed in current environment.",
+  "scenarios": [
+    {
+      "scenario": "server unavailable lalu pulih",
+      "precondition": "Database bersih; server dihentikan sebelum BookSeat.",
+      "steps": "Kirim RPC saat mati; mulai kembali pada alamat dan DB yang sama; ulangi UUID yang sama.",
+      "expected": {
+        "unavailable_status": "UNAVAILABLE",
+        "recovered_success": true,
+        "booking_rows": 1,
+        "request_id_reused": true
+      },
+      "actual": {
+        "unavailable_status": "UNAVAILABLE",
+        "recovered_success": true,
+        "booking_rows": 1,
+        "request_id_reused": true
+      },
+      "status": "PASS",
+      "evidence": "{'unavailable_status': 'UNAVAILABLE', 'recovered_success': True, 'booking_rows': 1, 'request_id_reused': True}"
+    },
+    {
+      "scenario": "validasi request tidak valid",
+      "precondition": "Server aktif; request_id bukan UUID.",
+      "steps": "Kirim BookSeat dengan request_id invalid dan periksa status gRPC.",
+      "expected": "INVALID_ARGUMENT",
+      "actual": "INVALID_ARGUMENT",
+      "status": "PASS",
+      "evidence": "INVALID_ARGUMENT"
+    },
+    {
+      "scenario": "konflik payload idempotency",
+      "precondition": "Server aktif; request_id belum pernah dipakai.",
+      "steps": "Booking A2; kirim ulang request_id sama dengan payload A3.",
+      "expected": {
+        "first_success": true,
+        "conflict_status": "ALREADY_EXISTS",
+        "booking_rows": 2
+      },
+      "actual": {
+        "first_success": true,
+        "conflict_status": "ALREADY_EXISTS",
+        "booking_rows": 2
+      },
+      "status": "PASS",
+      "evidence": "{'first_success': True, 'conflict_status': 'ALREADY_EXISTS', 'booking_rows': 2}"
+    },
+    {
+      "scenario": "stream disconnect dan subscribe ulang",
+      "precondition": "Server aktif; dua booking selesai.",
+      "steps": "Terima SNAPSHOT, batalkan stream, buka stream baru dan periksa SNAPSHOT terbaru.",
+      "expected": {
+        "initial_event": "SNAPSHOT",
+        "reconnected_event": "SNAPSHOT",
+        "snapshot_seats": 20,
+        "booked_seats": 2
+      },
+      "actual": {
+        "initial_event": "SNAPSHOT",
+        "reconnected_event": "SNAPSHOT",
+        "snapshot_seats": 20,
+        "booked_seats": 2
+      },
+      "status": "PASS",
+      "evidence": "{'initial_event': 'SNAPSHOT', 'reconnected_event': 'SNAPSHOT', 'snapshot_seats': 20, 'booked_seats': 2}"
+    },
+    {
+      "scenario": "timeout deterministik setelah commit dan retry",
+      "precondition": "DB bersih; response pertama ditahan oleh hook setelah service commit.",
+      "steps": "Tunggu sinyal post-commit; biarkan 150 ms deadline kedaluwarsa; ulangi request_id dan payload.",
+      "expected": {
+        "first_status": "DEADLINE_EXCEEDED",
+        "retry_success": true,
+        "db_booking_rows": 1,
+        "same_request_id": true,
+        "same_booking_id_as_committed_record": true,
+        "initial_stream_snapshot": "SNAPSHOT",
+        "single_booking_update": true,
+        "duplicate_event_published": false
+      },
+      "actual": {
+        "first_status": "DEADLINE_EXCEEDED",
+        "retry_success": true,
+        "retry_booking_id": "37c7d70a-6f72-4323-8f6e-c8b2eeeb4d90",
+        "db_booking_rows": 1,
+        "same_request_id": true,
+        "same_booking_id_as_committed_record": true,
+        "initial_stream_snapshot": "SNAPSHOT",
+        "single_booking_update": true,
+        "duplicate_event_published": false
+      },
+      "status": "PASS",
+      "evidence": "{'first_status': 'DEADLINE_EXCEEDED', 'retry_success': True, 'retry_booking_id': '37c7d70a-6f72-4323-8f6e-c8b2eeeb4d90', 'db_booking_rows': 1, 'same_request_id': True, 'same_booking_id_as_committed_record': True, 'initial_stream_snapshot': 'SNAPSHOT', 'single_booking_update': True, 'duplicate_event_published': False}"
+    },
+    {
+      "scenario": "timeout sebelum commit lalu retry setelah koneksi aktif",
+      "precondition": "DB bersih; handler ditahan sebelum transaksi.",
+      "steps": "Deadline 100 ms; lepaskan handler; retry UUID/payload yang sama.",
+      "expected": {
+        "first_status": "DEADLINE_EXCEEDED",
+        "retry_success": true,
+        "db_booking_rows": 1,
+        "same_request_id": true
+      },
+      "actual": {
+        "first_status": "DEADLINE_EXCEEDED",
+        "retry_success": true,
+        "db_booking_rows": 1,
+        "same_request_id": true
+      },
+      "status": "PASS",
+      "evidence": "{'first_status': 'DEADLINE_EXCEEDED', 'retry_success': True, 'db_booking_rows': 1, 'same_request_id': True}"
+    }
+  ],
+  "summary": {
+    "passed": 6,
+    "failed": 0
+  }
+}

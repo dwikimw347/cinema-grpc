@@ -1,0 +1,72 @@
+{
+  "workload": "GetSeats(SCH001), one persistent gRPC channel per worker, fresh SQLite DB per repetition",
+  "warmup": "one excluded GetSeats RPC per worker before synchronized start",
+  "total_requests_per_repetition": 200,
+  "repetitions": 3,
+  "clock": "time.perf_counter (monotonic)",
+  "throughput_formula": "completed RPCs / elapsed wall-clock seconds from barrier release to final response",
+  "latency_formula": "elapsed time from immediately before each RPC until response/error; successful and failed attempts are samples",
+  "percentile_method": "linear interpolation over sorted per-RPC latency samples; mean of repetition percentiles in summary",
+  "environment": {
+    "python": "3.13.14 (tags/v3.13.14:fd17997, Jun 10 2026, 13:03:48) [MSC v.1944 64 bit (AMD64)]",
+    "platform": "Windows-11-10.0.26300-SP0",
+    "grpcio": "1.85.0",
+    "protobuf": "7.36.2"
+  },
+  "summary": [
+    {
+      "concurrent_clients": 1,
+      "total_requests": 600,
+      "success": 600,
+      "business_rejection": 0,
+      "technical_error": 0,
+      "timeouts": 0,
+      "mean_latency_ms": 4.864527833427322,
+      "p50_latency_ms": 4.7956333340456085,
+      "p95_latency_ms": 5.313936668729487,
+      "p99_latency_ms": 5.767144667139895,
+      "throughput_rps": 205.5920679286656,
+      "duration_seconds": 2.9224794000037946,
+      "success_ratio": 1.0,
+      "db_bookings": 0,
+      "db_integrity": "ok",
+      "repetitions": 3
+    },
+    {
+      "concurrent_clients": 5,
+      "total_requests": 600,
+      "success": 600,
+      "business_rejection": 0,
+      "technical_error": 0,
+      "timeouts": 0,
+      "mean_latency_ms": 20.50570350005728,
+      "p50_latency_ms": 20.5993333341515,
+      "p95_latency_ms": 22.4246799996763,
+      "p99_latency_ms": 22.974573666336557,
+      "throughput_rps": 241.1295257749397,
+      "duration_seconds": 2.4886771999954362,
+      "success_ratio": 1.0,
+      "db_bookings": 0,
+      "db_integrity": "ok",
+      "repetitions": 3
+    },
+    {
+      "concurrent_clients": 20,
+      "total_requests": 600,
+      "success": 600,
+      "business_rejection": 0,
+      "technical_error": 0,
+      "timeouts": 0,
+      "mean_latency_ms": 79.73818533335968,
+      "p50_latency_ms": 82.07606666595287,
+      "p95_latency_ms": 85.95450166940249,
+      "p99_latency_ms": 104.67264666787135,
+      "throughput_rps": 235.49950301428862,
+      "duration_seconds": 2.5492280999969807,
+      "success_ratio": 1.0,
+      "db_bookings": 0,
+      "db_integrity": "ok",
+      "repetitions": 3
+    }
+  ]
+}

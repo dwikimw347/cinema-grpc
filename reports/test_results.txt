@@ -1,0 +1,51 @@
+COMMAND: D:\Main Storage\Documents\kuliah\sem 5\Komputasi Paralel dan Terdistribusi\Mini Project\cinema-grpc\.venv\Scripts\python.exe -m unittest discover -s tests -v
+EXIT CODE: 0
+
+test_database_constraint_blocks_second_confirmed_booking (test_booking.BookingTests.test_database_constraint_blocks_second_confirmed_booking) ... ok
+test_duplicate_returns_identical_result (test_booking.BookingTests.test_duplicate_returns_identical_result) ... ok
+test_get_schedules (test_booking.BookingTests.test_get_schedules) ... ok
+test_get_seats (test_booking.BookingTests.test_get_seats) ... ok
+test_idempotency_conflict (test_booking.BookingTests.test_idempotency_conflict) ... ok
+test_stream_snapshot_update_and_disconnect (test_booking.BookingTests.test_stream_snapshot_update_and_disconnect) ... ok
+test_stream_unknown_schedule (test_booking.BookingTests.test_stream_unknown_schedule) ... ok
+test_success_and_rejection_survive_restart (test_booking.BookingTests.test_success_and_rejection_survive_restart) ... ok
+test_successful_booking (test_booking.BookingTests.test_successful_booking) ... ok
+test_transaction_rolls_back_when_insert_fails (test_booking.BookingTests.test_transaction_rolls_back_when_insert_fails) ... ok
+test_validation_and_missing_resources (test_booking.BookingTests.test_validation_and_missing_resources) ... ok
+test_book_seat_success (test_client.ClientIntegrationTests.test_book_seat_success) ... ok
+test_get_schedules (test_client.ClientIntegrationTests.test_get_schedules) ... ok
+test_get_seats (test_client.ClientIntegrationTests.test_get_seats) ... ok
+test_idempotent_retry_identical_request_id (test_client.ClientIntegrationTests.test_idempotent_retry_identical_request_id) ... ok
+test_retry_callback_invoked_on_simulated_transient_failure (test_client.ClientIntegrationTests.test_retry_callback_invoked_on_simulated_transient_failure)
+Uji bahwa saat terjadi DEADLINE_EXCEEDED, retry dipanggil dengan ID yang sama. ... [RETRY #1/3] Terjadi gangguan (DEADLINE_EXCEEDED). Mengulang dalam 0.03s dengan ID TETAP SAMA (7e27ff15-f340-4520-bcd1-a176e12fef9d)...
+ok
+test_streaming_updates (test_client.ClientIntegrationTests.test_streaming_updates) ... ok
+test_concurrent_duplicate_request (test_concurrency.ConcurrencyTests.test_concurrent_duplicate_request) ... ok
+test_snapshot_and_booking_race_never_loses_change (test_concurrency.ConcurrencyTests.test_snapshot_and_booking_race_never_loses_change) ... ok
+test_stream_limit_keeps_unary_workers_available (test_concurrency.ConcurrencyTests.test_stream_limit_keeps_unary_workers_available) ... ok
+test_ten_concurrent_bookings_exactly_one_winner (test_concurrency.ConcurrencyTests.test_ten_concurrent_bookings_exactly_one_winner) ... ok
+test_bounded_queue_and_schedule_isolation (test_concurrency.PubSubTests.test_bounded_queue_and_schedule_isolation) ... ok
+test_demo_can_repeat_on_same_database (test_demo.DemoTests.test_demo_can_repeat_on_same_database) ... ok
+test_demo_refuses_success_when_no_seats_available (test_demo.DemoTests.test_demo_refuses_success_when_no_seats_available) ... ok
+test_demo_process_exit_code_reflects_failure (test_demo.FaultInjectionTests.test_demo_process_exit_code_reflects_failure) ... ok
+test_real_timeout_after_commit_has_one_booking (test_demo.FaultInjectionTests.test_real_timeout_after_commit_has_one_booking) ... [RETRY #1/3] Terjadi gangguan (DEADLINE_EXCEEDED). Mengulang dalam 0.08s dengan ID TETAP SAMA (89a946ab-bd71-44c0-83f0-2f2961162968)...
+ok
+test_invalid_json_fields_do_not_crash_handler (test_web.WebTests.test_invalid_json_fields_do_not_crash_handler) ... ok
+test_race_on_booked_seat_does_not_report_success (test_web.WebTests.test_race_on_booked_seat_does_not_report_success) ... ok
+test_rejected_request_then_new_operation (test_web.WebTests.test_rejected_request_then_new_operation) ... ok
+test_sse_disconnect_cleans_subscriber_without_booking (test_web.WebTests.test_sse_disconnect_cleans_subscriber_without_booking) ... ok
+test_sse_shutdown_cleans_idle_stream (test_web.WebTests.test_sse_shutdown_cleans_idle_stream) ... ok
+test_static_traversal_rejected_and_image_works (test_web.WebTests.test_static_traversal_rejected_and_image_works) ... ok
+test_unknown_result_keeps_id_for_retry_after_commit (test_web.WebTests.test_unknown_result_keeps_id_for_retry_after_commit) ... Pemesanan gagal pada percobaan 1/1 (code=StatusCode.DEADLINE_EXCEEDED, details=Deadline Exceeded)
+ok
+
+----------------------------------------------------------------------
+Ran 33 tests in 13.256s
+
+OK
+
+
+NODE COMMAND: node tests/test_web_state.js
+EXIT CODE: 0
+
+PASS: UUID setelah REJECTED, payload/ID retry, cegah klik ganda, error koneksi, jadwal kosong
